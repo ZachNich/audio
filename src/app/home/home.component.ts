@@ -1,12 +1,22 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
+import { Subscription } from 'rxjs';
+import { SocketService } from '../services/socket.service';
+import { SocketEvents } from '../services/socket.enum';
 
 @Component({
   selector: 'app-home',
   imports: [],
+  providers: [SocketService],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   @ViewChild('equalizerCanvas')
   canvasRef?: ElementRef<HTMLCanvasElement>;
   public isRecording = false;
@@ -14,14 +24,16 @@ export class HomeComponent implements OnInit {
   public audioContext = new AudioContext();
   public analyser: AnalyserNode | null = null;
   public data: Uint8Array<ArrayBuffer> = new Uint8Array();
+  private readonly subscriptions = new Subscription();
+
+  constructor(private socketService: SocketService) {}
 
   public ngOnInit(): void {
-    this.getMediaDevices();
+    this.send();
   }
 
-  public async getMediaDevices(): Promise<void> {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    console.log('devices: ', devices);
+  public ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   public async recordAudio(): Promise<void> {
@@ -54,8 +66,14 @@ export class HomeComponent implements OnInit {
       this.animationId && cancelAnimationFrame(this.animationId);
       this.isRecording = false;
     } catch (error) {
-      //handle error, set recording state
+      //TODO: handle error, set recording state
     }
+  }
+
+  private send(): void {
+    this.socketService.send(SocketEvents.events, [
+      'I like chocolate chip cookies.',
+    ]);
   }
 
   private drawCallback = () => this.draw(); //handling callback this binding

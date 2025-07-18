@@ -1,7 +1,38 @@
 <canvas #equalizerCanvas width="600" height="200"></canvas>
 
-@if (isRecording) {
-<button (click)="stopRecordingAudio()">Stop Recording</button>
+@if (currentRoom()) {
+  <h2>Room #{{ currentRoom() }}</h2>
+}
+
+<ul>
+  @for (member of roomMembers(); track member) {
+    <li>Connected User #{{ member }}</li>
+  }
+</ul>
+
+@if (isRecording()) {
+  <button (click)="stopRecordingAudio()">Stop Recording</button>
 } @else {
-<button (click)="recordAudio()">Start Recording</button>
+  <button (click)="recordAudio()">Start Recording</button>
+}
+
+@if (!currentRoom()) {
+  <button (click)="startSession()">Start Session</button>
+
+  @if (availableSessions().length) {
+    <select [(ngModel)]="selectedSession">
+      @for (session of availableSessions(); track session) {
+        <!-- TODO: Add session labels -->
+        <option [ngValue]="session">{{ session }}</option>
+      }
+    </select>
+  }
+
+  @if (selectedSession()) {
+    <button (click)="joinSession(selectedSession())">Join Session</button>
+  }
+}
+
+@if (currentRoom()) {
+  <button (click)="leaveSession()">Leave Session</button>
 }
